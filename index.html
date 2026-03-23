@@ -533,7 +533,7 @@ tr:hover td{background:var(--surface);}
       </div>
       <div class="log-scroll" id="log-list"><div class="log-empty">No records yet today</div></div>
       <div style="padding:8px 14px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;">
-        <button class="btn-danger" onclick="clearLog()">🗑 Clear Log</button>
+        <button class="btn-danger" onclick="openClearPwd('log')">🗑 Clear Log</button>
       </div>
     </div>
   </div>
@@ -600,7 +600,7 @@ tr:hover td{background:var(--surface);}
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <input class="search-input" type="text" placeholder="Search…" oninput="searchEmp(this.value)" style="width:140px;">
-        <button class="btn-danger" onclick="clearAllEmp()">🗑 Clear All</button>
+        <button class="btn-danger" onclick="openClearPwd('emp')">🗑 Clear All</button>
       </div>
     </div>
 
@@ -698,6 +698,37 @@ tr:hover td{background:var(--surface);}
   </div>
 </div>
 
+
+<!-- PASSWORD CONFIRM MODAL -->
+<div class="modal-bg" id="pwd-modal">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-drag"></div>
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="width:48px;height:48px;background:var(--fail-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 10px;">🔒</div>
+      <div class="modal-title" style="font-size:16px;" id="pwd-modal-title">Confirm Clear</div>
+      <div class="modal-sub" id="pwd-modal-sub">Enter the password to proceed.</div>
+    </div>
+    <div class="login-err" id="pwd-err" style="margin-bottom:12px;">
+      <span>⚠️</span><span id="pwd-err-msg">Incorrect password</span>
+    </div>
+    <div style="position:relative;margin-bottom:14px;">
+      <input type="password" id="pwd-input" placeholder="Enter password"
+        style="width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);
+        padding:11px 42px 11px 14px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;
+        font-size:15px;font-weight:700;letter-spacing:3px;outline:none;transition:border-color .18s;"
+        onkeydown="if(event.key==='Enter')confirmClearPwd()"
+        onfocus="this.style.borderColor='var(--accent)'"
+        onblur="this.style.borderColor='var(--border)'">
+      <button onclick="togglePwdVis2()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);
+        background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;" id="pwd-eye">👁</button>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-ghost" onclick="closePwdModal()" style="flex:1;">Cancel</button>
+      <button class="btn" onclick="confirmClearPwd()"
+        style="flex:2;background:var(--fail);color:#fff;padding:11px;">🗑 Clear Now</button>
+    </div>
+  </div>
+</div>
 
 <!-- Toast -->
 <div class="toast" id="toast"><span id="t-ic">✅</span><span id="t-msg">Done</span></div>
@@ -1032,8 +1063,61 @@ function updateStats(){
   document.getElementById('s-ov').textContent=t.filter(e=>e.mode==='Override').length;
   document.getElementById('s-emp').textContent=DB.filter(e=>e.status==='active').length;
 }
+// ── CLEAR PASSWORD PROTECTION ──
+const CLEAR_PWD = 'ssd0063';
+let clearPwdTarget = null;
+
+function openClearPwd(target){
+  clearPwdTarget = target;
+  document.getElementById('pwd-input').value='';
+  document.getElementById('pwd-err').classList.remove('show');
+  document.getElementById('pwd-modal-title').textContent =
+    target==='log' ? '🗑 Clear Attendance Log' : '🗑 Clear All Employees';
+  document.getElementById('pwd-modal-sub').textContent =
+    target==='log'
+      ? 'This will permanently delete all attendance records from the database.'
+      : 'This will permanently delete all employee records from the database.';
+  document.getElementById('pwd-modal').classList.add('show');
+  setTimeout(()=>document.getElementById('pwd-input').focus(), 80);
+}
+
+function closePwdModal(){
+  document.getElementById('pwd-modal').classList.remove('show');
+  clearPwdTarget = null;
+}
+
+function confirmClearPwd(){
+  const val = document.getElementById('pwd-input').value;
+  const err = document.getElementById('pwd-err');
+  if(val !== CLEAR_PWD){
+    document.getElementById('pwd-err-msg').textContent = 'Incorrect password — please try again';
+    err.classList.add('show');
+    document.getElementById('pwd-input').value='';
+    document.getElementById('pwd-input').focus();
+    // Shake the modal
+    const m = document.querySelector('#pwd-modal .modal');
+    m.style.animation='none'; m.offsetHeight; m.style.animation='shake .4s ease';
+    return;
+  }
+  err.classList.remove('show');
+  closePwdModal();
+  if(clearPwdTarget==='log') clearLog();
+  else if(clearPwdTarget==='emp') clearAllEmp();
+}
+
+function togglePwdVis2(){
+  const inp=document.getElementById('pwd-input');
+  const btn=document.getElementById('pwd-eye');
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+  else{inp.type='password';btn.textContent='👁';}
+}
+
+// Close pwd modal on bg click
+document.getElementById('pwd-modal').addEventListener('click',function(e){
+  if(e.target===this) closePwdModal();
+});
+
 async function clearLog(){
-  if(!confirm('Clear ALL attendance records from database? This cannot be undone.'))return;
   try{
     await fbClearCollection('attendance');
     showToast('🗑','Attendance log cleared','ok');
@@ -1196,7 +1280,6 @@ async function deleteEmp(id){
   try{ await fbDeleteEmployee(id); showToast('🗑','Employee removed','ok'); }catch(err){}
 }
 async function clearAllEmp(){
-  if(!confirm('Delete ALL employees from database? This cannot be undone.'))return;
   try{ await fbClearCollection('employees'); showToast('🗑','All employees cleared','ok'); }catch(err){}
 }
 
