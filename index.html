@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Silver Star — Attendance System</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f4fb;
+  --white:#ffffff;
+  --surface:#f7f9fd;
+  --border:#dde4f0;
+  --border2:#c8d3e8;
+  --accent:#2563eb;
+  --accent-light:#eff4ff;
+  --accent-mid:#bfcffd;
+  --acg:#0ea5a0;
+  --acg-light:#ecfdf9;
+  --warn:#d97706;
+  --warn-light:#fffbeb;
+  --text:#0f172a;
+  --text2:#334155;
+  --muted:#64748b;
+  --muted2:#94a3b8;
+  --ok:#059669;
+  --ok-light:#ecfdf5;
+  --fail:#dc2626;
+  --fail-light:#fef2f2;
+  --shadow:0 1px 3px rgba(15,23,42,.08),0 4px 16px rgba(37,99,235,.06);
+  --shadow-md:0 4px 12px rgba(15,23,42,.1),0 8px 32px rgba(37,99,235,.08);
+  --radius:12px;
+  --radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;font-size:14px;line-height:1.5;}
+
+/* ─── HEADER ─── */
+header{
+  position:sticky;top:0;z-index:200;
+  background:var(--white);border-bottom:1px solid var(--border);
+  box-shadow:0 1px 8px rgba(37,99,235,.07);
+  padding:0 20px;height:60px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo-sq{
+  width:36px;height:36px;border-radius:9px;
+  background:linear-gradient(135deg,#2563eb,#1d4ed8);
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:800;color:#fff;letter-spacing:-1px;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  flex-shrink:0;
+}
+.logo-text{font-weight:800;font-size:15px;color:var(--text);letter-spacing:-.2px;}
+.logo-sub{font-size:10px;color:var(--muted);font-weight:500;letter-spacing:.5px;margin-top:-1px;}
+
+.nav-pills{display:flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:3px;}
+.npill{padding:6px 14px;border-radius:8px;border:none;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:12px;
+  cursor:pointer;transition:all .18s;background:transparent;color:var(--muted);white-space:nowrap;}
+.npill.on{background:var(--white);color:var(--accent);box-shadow:var(--shadow);font-weight:700;}
+
+.hclock{text-align:right;flex-shrink:0;}
+#hclock{font-weight:800;font-size:16px;color:var(--accent);letter-spacing:.5px;font-variant-numeric:tabular-nums;}
+#hdate{font-size:10px;color:var(--muted);font-weight:500;}
+
+/* ─── PAGES ─── */
+.page{display:none;}.page.on{display:block;}
+
+/* ─── ADMIN LOGIN SCREEN ─── */
+#admin-login-screen{
+  display:none;position:fixed;inset:0;z-index:300;
+  background:var(--bg);align-items:center;justify-content:center;padding:20px;
+}
+#admin-login-screen.show{display:flex;}
+.login-card{
+  background:var(--white);border:1px solid var(--border);border-radius:18px;
+  box-shadow:0 8px 40px rgba(37,99,235,.12);
+  width:100%;max-width:380px;padding:36px 32px;
+}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
+.login-logo-sq{
+  width:42px;height:42px;border-radius:11px;
+  background:linear-gradient(135deg,#2563eb,#1d4ed8);
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;font-weight:800;color:#fff;letter-spacing:-1px;
+}
+.login-logo-text{font-weight:800;font-size:17px;color:var(--text);}
+.login-logo-sub{font-size:10px;color:var(--muted);font-weight:500;letter-spacing:.5px;}
+.login-title{font-weight:800;font-size:20px;color:var(--text);margin-bottom:4px;}
+.login-sub{font-size:12px;color:var(--muted);margin-bottom:24px;font-weight:500;}
+.login-field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.login-field label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;}
+.login-input-wrap{position:relative;}
+.login-field input{
+  width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  padding:11px 40px 11px 14px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:14px;font-weight:600;outline:none;transition:border-color .18s,box-shadow .18s;
+}
+.login-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.login-field input::placeholder{color:var(--muted2);font-weight:400;}
+.login-eye{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  cursor:pointer;color:var(--muted);font-size:15px;user-select:none;
+  background:none;border:none;padding:0;
+}
+.login-eye:hover{color:var(--accent);}
+.login-err{
+  display:none;background:var(--fail-light);border:1px solid #fecaca;
+  border-radius:var(--radius-sm);padding:9px 12px;font-size:12px;
+  color:var(--fail);font-weight:600;margin-bottom:14px;
+  align-items:center;gap:7px;
+}
+.login-err.show{display:flex;}
+.login-btn{
+  width:100%;padding:13px;background:var(--accent);color:#fff;border:none;
+  border-radius:var(--radius-sm);font-family:'Plus Jakarta Sans',sans-serif;
+  font-weight:700;font-size:14px;cursor:pointer;transition:all .18s;margin-top:4px;
+}
+.login-btn:hover{background:#1d4ed8;box-shadow:0 4px 14px rgba(37,99,235,.35);}
+.login-btn:active{transform:scale(.98);}
+.login-hint{font-size:11px;color:var(--muted2);text-align:center;margin-top:14px;font-weight:500;}
+.admin-logout-btn{
+  display:none;padding:6px 13px;background:var(--fail-light);border:1.5px solid #fecaca;
+  color:var(--fail);border-radius:var(--radius-sm);font-family:'Plus Jakarta Sans',sans-serif;
+  font-weight:700;font-size:11px;cursor:pointer;transition:all .18s;
+}
+.admin-logout-btn:hover{background:#fee2e2;}
+.admin-logout-btn.show{display:inline-flex;align-items:center;gap:5px;}
+
+/* ─── LAYOUT ─── */
+.page-wrap{max-width:1200px;margin:0 auto;padding:20px 16px;}
+.two-col{display:grid;grid-template-columns:1fr 380px;gap:20px;}
+.three-col{display:grid;grid-template-columns:380px 1fr;gap:20px;}
+
+@media(max-width:900px){
+  .two-col,.three-col{grid-template-columns:1fr;}
+}
+
+/* ─── CARD ─── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);}
+.ch{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.ch-left{}
+.ch-title{font-weight:700;font-size:13px;color:var(--text);letter-spacing:-.1px;}
+.ch-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.cb{padding:18px;}
+
+/* ─── FORM ─── */
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.fg label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;}
+.fg input,.fg select,.fg textarea{
+  background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  padding:9px 12px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;
+  font-weight:500;outline:none;transition:border-color .18s,box-shadow .18s;width:100%;
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.fg input::placeholder{color:var(--muted2);font-weight:400;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:480px){.frow{grid-template-columns:1fr;}}
+
+/* ─── BUTTONS ─── */
+.btn{border:none;border-radius:var(--radius-sm);padding:10px 16px;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:12px;
+  cursor:pointer;transition:all .18s;letter-spacing:.1px;display:inline-flex;align-items:center;justify-content:center;gap:6px;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#1d4ed8;box-shadow:0 4px 14px rgba(37,99,235,.35);}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;}
+.btn-success{background:var(--ok);color:#fff;}
+.btn-success:hover{background:#047857;}
+.btn-success:disabled{opacity:.35;cursor:not-allowed;}
+.btn-warn{background:var(--warn);color:#fff;}
+.btn-warn:hover{background:#b45309;}
+.btn-ghost{background:var(--surface);border:1.5px solid var(--border);color:var(--text2);}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:transparent;border:1.5px solid #fecaca;color:var(--fail);
+  font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer;transition:all .18s;}
+.btn-danger:hover{background:var(--fail-light);}
+.btn-sm{padding:7px 12px;font-size:11px;}
+.brow{display:flex;gap:8px;flex-wrap:wrap;}
+.brow .btn{flex:1;min-width:0;}
+
+/* ─── CAMERA ─── */
+.cam-box{
+  position:relative;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;aspect-ratio:4/3;
+  display:flex;align-items:center;justify-content:center;margin-bottom:12px;
+}
+.cam-box video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:none;position:absolute;inset:0;}
+.cam-box canvas{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1);pointer-events:none;}
+.cam-ph{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted);font-size:12px;text-align:center;padding:20px;}
+.cam-ph .phi{font-size:36px;opacity:.3;}
+.cam-captured{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;}
+.cam-status{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;color:var(--muted);margin-bottom:10px;min-height:36px;}
+
+/* scan sweep */
+.sweep{position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  animation:sw 2s ease-in-out infinite;opacity:0;pointer-events:none;z-index:4;}
+.scanning .sweep{opacity:.8;}
+@keyframes sw{0%{top:0}100%{top:100%}}
+
+/* ─── STATUS DOT ─── */
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--muted2);flex-shrink:0;}
+.sdot.ready{background:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.2);}
+.sdot.pulse{background:var(--acg);box-shadow:0 0 0 3px rgba(14,165,160,.2);animation:bk 1s infinite;}
+.sdot.ok{background:var(--ok);box-shadow:0 0 0 3px rgba(5,150,105,.2);}
+.sdot.fail{background:var(--fail);box-shadow:0 0 0 3px rgba(220,38,38,.2);}
+.sdot.warn{background:var(--warn);box-shadow:0 0 0 3px rgba(217,119,6,.2);}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ─── BADGES ─── */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.3px;}
+.b-blue{background:var(--accent-light);color:var(--accent);}
+.b-green{background:var(--acg-light);color:var(--acg);}
+.b-ok{background:var(--ok-light);color:var(--ok);}
+.b-fail{background:var(--fail-light);color:var(--fail);}
+.b-warn{background:var(--warn-light);color:var(--warn);}
+
+/* ─── EMPLOYEE PREVIEW ─── */
+.ep{display:none;background:var(--accent-light);border:1.5px solid var(--accent-mid);
+  border-radius:var(--radius);padding:12px;margin-bottom:12px;align-items:center;gap:12px;}
+.ep.show{display:flex;}
+.ep-img{width:52px;height:52px;border-radius:10px;object-fit:cover;border:2px solid var(--white);
+  box-shadow:var(--shadow);background:var(--bg);flex-shrink:0;}
+.ep-name{font-weight:700;font-size:14px;color:var(--text);margin-bottom:2px;}
+.ep-meta{font-size:11px;color:var(--muted);font-weight:500;}
+
+/* ─── TYPE TOGGLE ─── */
+.type-tog{display:flex;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);overflow:hidden;margin-bottom:12px;}
+.tt-opt{flex:1;padding:9px;text-align:center;cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:12px;
+  color:var(--muted);transition:all .18s;border:none;background:transparent;}
+.tt-opt.on{background:var(--accent);color:#fff;}
+
+/* ─── STATUS BAR ─── */
+.sbar{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:9px 13px;font-size:12px;font-weight:500;margin-bottom:14px;min-height:40px;}
+
+/* ─── STATS ─── */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+@media(max-width:600px){.stat-row{grid-template-columns:repeat(2,1fr);}}
+.stat-t{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow);}
+.stat-t .sl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px;}
+.stat-t .sv{font-weight:800;font-size:24px;line-height:1;color:var(--accent);}
+.sv.green{color:var(--ok)}.sv.red{color:var(--fail)}.sv.warn{color:var(--warn)}
+
+/* ─── LOG ─── */
+.log-scroll{max-height:420px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.le{display:flex;align-items:center;gap:10px;padding:9px 16px;
+  border-bottom:1px solid var(--border);animation:lein .22s ease;transition:background .12s;}
+.le:hover{background:var(--surface);}
+.le:last-child{border-bottom:none;}
+@keyframes lein{from{opacity:0;transform:translateX(5px)}to{opacity:1;transform:none}}
+.le-av{width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid var(--border);background:var(--bg);flex-shrink:0;}
+.le-av-ph{width:30px;height:30px;border-radius:50%;background:var(--accent-light);border:2px solid var(--accent-mid);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10px;color:var(--accent);flex-shrink:0;}
+.le-info{flex:1;min-width:0;}
+.le-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);}
+.le-meta{font-size:10px;color:var(--muted);margin-top:1px;}
+.le-r{text-align:right;flex-shrink:0;}
+.le-time{font-weight:800;font-size:12px;color:var(--accent);font-variant-numeric:tabular-nums;}
+.le-date{font-size:9px;color:var(--muted2);margin-top:1px;}
+.log-empty{padding:40px;text-align:center;color:var(--muted);font-size:12px;}
+
+/* ─── TABLE ─── */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{padding:9px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.8px;
+  text-transform:uppercase;color:var(--muted);border-bottom:1.5px solid var(--border);white-space:nowrap;}
+td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--surface);}
+.t-av{width:30px;height:30px;border-radius:8px;object-fit:cover;border:1.5px solid var(--border);background:var(--bg);}
+.t-av-ph{width:30px;height:30px;border-radius:8px;background:var(--accent-light);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:var(--accent);}
+.empty-t{padding:48px;text-align:center;color:var(--muted);}
+.empty-t .ei{font-size:30px;opacity:.25;margin-bottom:8px;}
+
+/* ─── EXPORT BTN ─── */
+.exp-btn{background:var(--ok);color:#fff;border:none;border-radius:var(--radius-sm);
+  padding:7px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:11px;
+  cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:5px;}
+.exp-btn:hover{background:#047857;box-shadow:0 3px 10px rgba(5,150,105,.25);}
+
+/* ─── SELF-REGISTER HINT ─── */
+.sreg-hint{background:linear-gradient(135deg,var(--accent-light),#e0eaff);border:1.5px solid var(--accent-mid);
+  border-radius:var(--radius);padding:14px 16px;margin-top:14px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.sreg-hint-text{font-size:12px;color:var(--accent);font-weight:600;}
+.sreg-hint-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* ─── MODAL ─── */
+.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(4px);
+  z-index:500;display:none;align-items:flex-end;justify-content:center;padding:0;}
+.modal-bg.show{display:flex;}
+@media(min-width:600px){
+  .modal-bg{align-items:center;padding:20px;}
+}
+.modal{background:var(--white);border-radius:16px 16px 0 0;padding:24px;width:100%;max-height:90vh;overflow-y:auto;
+  box-shadow:0 -8px 40px rgba(15,23,42,.2);}
+@media(min-width:600px){
+  .modal{border-radius:16px;max-width:440px;max-height:85vh;}
+}
+.modal-title{font-weight:800;font-size:17px;margin-bottom:4px;color:var(--text);}
+.modal-sub{font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.6;}
+.modal-drag{width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px;}
+@media(min-width:600px){.modal-drag{display:none;}}
+.modal-emp{display:flex;align-items:center;gap:12px;background:var(--accent-light);border:1px solid var(--accent-mid);
+  border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:16px;}
+.modal-emp img{width:40px;height:40px;border-radius:8px;object-fit:cover;background:var(--bg);}
+.reason-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.reason-opt{padding:8px 10px;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);font-size:11px;cursor:pointer;transition:all .18s;text-align:center;font-weight:600;color:var(--text2);}
+.reason-opt:hover{border-color:var(--warn);color:var(--warn);}
+.reason-opt.sel{border-color:var(--warn);background:var(--warn-light);color:var(--warn);}
+.modal-custom{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  padding:9px 12px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;outline:none;
+  margin-bottom:14px;transition:border-color .18s;}
+.modal-custom:focus{border-color:var(--warn);box-shadow:0 0 0 3px rgba(217,119,6,.1);}
+.modal-btns{display:flex;gap:10px;}
+.modal-btns .btn{flex:1;}
+
+/* ─── SREG MODAL ─── */
+.sreg-inner{background:var(--white);border-radius:16px 16px 0 0;width:100%;max-height:92vh;overflow-y:auto;
+  box-shadow:0 -8px 40px rgba(15,23,42,.2);}
+@media(min-width:640px){
+  .sreg-inner{border-radius:16px;max-width:500px;max-height:88vh;}
+}
+.sreg-head{padding:20px 20px 14px;border-bottom:1px solid var(--border);}
+.sreg-head-title{font-weight:800;font-size:16px;color:var(--text);}
+.sreg-head-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.sreg-body{padding:18px 20px;}
+
+/* ─── PENDING ─── */
+.pend-section{padding:12px 16px;border-bottom:1px solid var(--border);background:#fffbeb;}
+.pend-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--warn);margin-bottom:8px;}
+.pend-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.pend-item:last-child{border-bottom:none;}
+
+/* ─── TOAST ─── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--text);color:#fff;border-radius:12px;padding:11px 18px;
+  display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;
+  z-index:999;opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);
+  max-width:calc(100vw - 32px);box-shadow:0 8px 28px rgba(15,23,42,.3);white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.tok{background:var(--ok);}
+.toast.tfail{background:var(--fail);}
+.toast.twarn{background:var(--warn);}
+
+/* ─── MOBILE NAV FIX ─── */
+@media(max-width:480px){
+  header{padding:0 12px;}
+  .logo-sub{display:none;}
+  .npill{padding:6px 10px;font-size:11px;}
+  #hclock{font-size:14px;}
+  #hdate{display:none;}
+  .page-wrap{padding:14px 12px;}
+  .cb{padding:14px;}
+  .ch{padding:12px 14px;}
+  .modal,.sreg-inner{border-radius:16px 16px 0 0 !important;}
+}
+
+/* search bar shared */
+.search-input{
+  width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  padding:8px 12px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:12px;font-weight:500;outline:none;transition:border-color .18s;
+}
+.search-input:focus{border-color:var(--accent);}
+</style>
+</head>
+<body>
+
+<!-- ADMIN LOGIN SCREEN -->
+<div id="admin-login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-sq">SS</div>
+      <div>
+        <div class="login-logo-text">Silver Star</div>
+        <div class="login-logo-sub">Admin Access</div>
+      </div>
+    </div>
+    <div class="login-title">Admin Sign In</div>
+    <div class="login-sub">Enter your credentials to access the Admin Panel</div>
+
+    <div class="login-err" id="login-err">
+      <span>🔒</span><span id="login-err-msg">Invalid ID or Password</span>
+    </div>
+
+    <div class="login-field">
+      <label>Admin ID</label>
+      <div class="login-input-wrap">
+        <input type="text" id="login-id" placeholder="Enter Admin ID" autocomplete="off"
+          onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+      </div>
+    </div>
+
+    <div class="login-field">
+      <label>Password</label>
+      <div class="login-input-wrap">
+        <input type="password" id="login-pass" placeholder="Enter Password"
+          onkeydown="if(event.key==='Enter')doLogin()">
+        <button class="login-eye" onclick="togglePwdVisibility()" id="eye-btn" title="Show/hide password">👁</button>
+      </div>
+    </div>
+
+    <button class="login-btn" onclick="doLogin()">🔓 Sign In to Admin Panel</button>
+    <div class="login-hint">🛡 Restricted access — authorised personnel only</div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo-wrap">
+    <div class="logo-sq">SS</div>
+    <div>
+      <div class="logo-text">Silver Star</div>
+      <div class="logo-sub">Attendance</div>
+    </div>
+  </div>
+
+  <div class="nav-pills">
+    <button class="npill on" id="pill-attendance" onclick="goPage('attendance',this)">📋 Attendance</button>
+    <button class="npill" id="pill-admin" onclick="requestAdmin(this)">🛡 Admin</button>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button class="admin-logout-btn" id="logout-btn" onclick="logoutAdmin()">🔒 Log Out</button>
+    <div class="hclock">
+      <div id="hclock">00:00:00</div>
+      <div id="hdate">—</div>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════
+     ATTENDANCE PAGE
+══════════════════════ -->
+<div class="page on" id="page-attendance">
+<div class="page-wrap">
+<div class="two-col">
+
+  <!-- LEFT -->
+  <div>
+    <!-- ID Input -->
+    <div class="card" style="margin-bottom:14px;">
+      <div class="ch">
+        <div class="ch-left">
+          <div class="ch-title">Mark Attendance</div>
+          <div class="ch-sub">Enter Employee ID to identify</div>
+        </div>
+      </div>
+      <div class="cb">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <input type="text" id="att-id" placeholder="Employee ID  (e.g. SS-001)"
+            oninput="onID(this.value)" autocomplete="off"
+            style="flex:1;background:var(--surface);border:2px solid var(--border);border-radius:var(--radius-sm);
+            padding:11px 14px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;
+            font-size:16px;letter-spacing:1px;text-transform:uppercase;outline:none;transition:border-color .18s;">
+          <button class="btn btn-ghost" onclick="clearAtt()" style="flex-shrink:0;padding:11px 14px;">✕</button>
+        </div>
+
+        <!-- Employee Preview -->
+        <div class="ep" id="ep">
+          <img class="ep-img" id="ep-img" src="" alt="" onerror="this.style.display='none'">
+          <div>
+            <div class="ep-name" id="ep-name">—</div>
+            <div class="ep-meta" id="ep-meta">—</div>
+          </div>
+        </div>
+
+        <!-- Type Toggle -->
+        <div class="type-tog">
+          <button class="tt-opt on" id="tt-in" onclick="setType('Check In')">▶ Check In</button>
+          <button class="tt-opt" id="tt-out" onclick="setType('Check Out')">◀ Check Out</button>
+        </div>
+
+        <!-- Status -->
+        <div class="sbar">
+          <div class="sdot ready" id="att-dot"></div>
+          <span id="att-stxt">Enter Employee ID above to begin</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="brow">
+          <button class="btn btn-primary" id="mark-btn" onclick="markAttendance()" disabled style="padding:12px;flex:2;">
+            ✓ Mark Attendance
+          </button>
+          <button class="btn btn-warn" id="override-btn" onclick="openOverride()" disabled style="padding:12px;flex:1;">
+            ⚡ Override
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Self register hint -->
+    <div class="sreg-hint">
+      <div>
+        <div class="sreg-hint-text">New Employee? Register Yourself</div>
+        <div class="sreg-hint-sub">Submit details for admin approval</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openSelfReg()">+ Register Me</button>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Log -->
+  <div>
+    <div class="stat-row">
+      <div class="stat-t"><div class="sl">Today</div><div class="sv" id="s-total">0</div></div>
+      <div class="stat-t"><div class="sl">Normal</div><div class="sv green" id="s-ok">0</div></div>
+      <div class="stat-t"><div class="sl">Override</div><div class="sv warn" id="s-ov">0</div></div>
+      <div class="stat-t"><div class="sl">Staff</div><div class="sv" id="s-emp">0</div></div>
+    </div>
+
+    <div class="card">
+      <div class="ch">
+        <div class="ch-left"><div class="ch-title">Attendance Log</div></div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="exp-btn" onclick="exportExcel()">⬇ Export</button>
+        </div>
+      </div>
+      <div style="padding:8px 12px;border-bottom:1px solid var(--border);">
+        <input class="search-input" type="text" placeholder="Search name or ID…" oninput="filterLog(this.value)">
+      </div>
+      <div class="log-scroll" id="log-list"><div class="log-empty">No records yet today</div></div>
+      <div style="padding:8px 14px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;">
+        <button class="btn-danger" onclick="clearLog()">🗑 Clear Log</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+</div>
+
+<!-- ══════════════════════
+     ADMIN PAGE
+══════════════════════ -->
+<div class="page" id="page-admin">
+<div class="page-wrap">
+<div class="three-col">
+
+  <!-- LEFT: Register -->
+  <div class="card">
+    <div class="ch">
+      <div class="ch-left">
+        <div class="ch-title">Register Employee</div>
+        <div class="ch-sub">Admin — capture photo + details</div>
+      </div>
+    </div>
+    <div class="cb">
+      <div class="cam-box scanning" id="adm-cam-box">
+        <div class="cam-ph" id="adm-cam-ph"><div class="phi">📷</div><p>Start camera to capture photo</p></div>
+        <video id="adm-vid" autoplay muted playsinline></video>
+        <canvas id="adm-canvas"></canvas>
+        <img id="adm-captured" class="cam-captured" alt="">
+        <div class="sweep"></div>
+      </div>
+      <div class="cam-status" id="adm-cs"><span>⚪</span><span style="margin-left:6px;">Camera not started</span></div>
+      <div class="brow" style="margin-bottom:12px;">
+        <button class="btn btn-ghost" id="adm-cam-btn" onclick="toggleAdmCam()">▶ Camera</button>
+        <button class="btn btn-primary" id="adm-cap-btn" onclick="admCapture()" disabled>📸 Capture</button>
+        <button class="btn btn-ghost" id="adm-ret-btn" onclick="admRetake()" style="display:none;">↺ Retake</button>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Employee ID *</label><input id="f-id" type="text" placeholder="SS-001"></div>
+        <div class="fg"><label>Full Name *</label><input id="f-name" type="text" placeholder="Full name"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Department</label><input id="f-dept" type="text" placeholder="Department"></div>
+        <div class="fg"><label>Designation</label><input id="f-desig" type="text" placeholder="Job title"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Shift</label>
+          <select id="f-shift"><option>Morning</option><option>Afternoon</option><option>Night</option></select>
+        </div>
+        <div class="fg"><label>Phone</label><input id="f-phone" type="text" placeholder="Contact"></div>
+      </div>
+      <button class="btn btn-success" id="adm-save-btn" onclick="saveEmployee(false)" style="width:100%;padding:12px;margin-top:4px;">
+        ✓ Save to Database
+      </button>
+    </div>
+  </div>
+
+  <!-- RIGHT: DB Table -->
+  <div class="card">
+    <div class="ch">
+      <div class="ch-left">
+        <div class="ch-title">Employee Database</div>
+        <div class="ch-sub" id="emp-count">0 employees</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input class="search-input" type="text" placeholder="Search…" oninput="searchEmp(this.value)" style="width:140px;">
+        <button class="btn-danger" onclick="clearAllEmp()">🗑 Clear All</button>
+      </div>
+    </div>
+
+    <!-- Pending -->
+    <div id="pend-section" style="display:none;" class="pend-section">
+      <div class="pend-label">⏳ Pending Self-Registrations</div>
+      <div id="pend-list"></div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Photo</th><th>ID</th><th>Name</th><th>Dept</th><th>Shift</th><th>Status</th><th></th></tr></thead>
+        <tbody id="emp-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div>
+</div>
+
+<!-- ══════════════════════
+     OVERRIDE MODAL
+══════════════════════ -->
+<div class="modal-bg" id="override-modal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title">⚡ Manual Override</div>
+    <div class="modal-sub">Select a reason to mark attendance via manual override. This will be flagged in the log and Excel export.</div>
+    <div class="modal-emp" id="modal-emp-info">
+      <img id="modal-ep-img" src="" alt="" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">
+      <div>
+        <div style="font-weight:700;font-size:14px;" id="modal-ep-name">—</div>
+        <div style="font-size:11px;color:var(--muted);" id="modal-ep-meta">—</div>
+      </div>
+    </div>
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px;">Select Reason</div>
+    <div class="reason-grid">
+      <div class="reason-opt" onclick="selReason(this,'Camera not available')">📷 Camera unavailable</div>
+      <div class="reason-opt" onclick="selReason(this,'Technical issue')">🔧 Technical issue</div>
+      <div class="reason-opt" onclick="selReason(this,'Medical / injury')">🏥 Medical / injury</div>
+      <div class="reason-opt" onclick="selReason(this,'Manager approval')">👔 Manager approval</div>
+    </div>
+    <input class="modal-custom" id="override-reason" type="text" placeholder="Or type a custom reason…">
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('override-modal')">Cancel</button>
+      <button class="btn btn-warn" onclick="doOverride()">⚡ Override & Mark</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════
+     SELF-REGISTER MODAL
+══════════════════════ -->
+<div class="modal-bg" id="sreg-modal">
+  <div class="sreg-inner">
+    <div class="modal-drag" style="padding-top:10px;display:block;"></div>
+    <div class="sreg-head">
+      <div class="sreg-head-title">👤 Self Registration</div>
+      <div class="sreg-head-sub">Submit for admin approval — you'll get an ID once approved</div>
+    </div>
+    <div class="sreg-body">
+      <div class="cam-box scanning" id="sreg-cam-box" style="aspect-ratio:16/9;">
+        <div class="cam-ph" id="sreg-cam-ph"><div class="phi">🤳</div><p>Capture your face photo</p></div>
+        <video id="sreg-vid" autoplay muted playsinline></video>
+        <canvas id="sreg-canvas"></canvas>
+        <img id="sreg-captured" class="cam-captured" alt="">
+        <div class="sweep"></div>
+      </div>
+      <div class="cam-status" id="sreg-cs"><span>⚪</span><span style="margin-left:6px">Not started</span></div>
+      <div class="brow" style="margin-bottom:12px;">
+        <button class="btn btn-ghost" id="sreg-cam-btn" onclick="toggleSregCam()">▶ Camera</button>
+        <button class="btn btn-primary" id="sreg-cap-btn" onclick="sregCapture()" disabled>📸 Capture</button>
+        <button class="btn btn-ghost" id="sreg-ret-btn" onclick="sregRetake()" style="display:none;">↺ Retake</button>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Desired ID *</label><input id="sr-id" type="text" placeholder="e.g. SS-010"></div>
+        <div class="fg"><label>Full Name *</label><input id="sr-name" type="text" placeholder="Your name"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Department</label><input id="sr-dept" type="text" placeholder="Department"></div>
+        <div class="fg"><label>Designation</label><input id="sr-desig" type="text" placeholder="Job title"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Shift</label>
+          <select id="sr-shift"><option>Morning</option><option>Afternoon</option><option>Night</option></select>
+        </div>
+        <div class="fg"><label>Phone *</label><input id="sr-phone" type="text" placeholder="Contact"></div>
+      </div>
+      <div class="brow" style="margin-top:4px;">
+        <button class="btn btn-ghost" onclick="closeModal('sreg-modal');stopSregCam();">Cancel</button>
+        <button class="btn btn-primary" onclick="submitSelfReg()" style="flex:2;">📨 Submit for Approval</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Toast -->
+<div class="toast" id="toast"><span id="t-ic">✅</span><span id="t-msg">Done</span></div>
+
+<!-- Firebase SDKs -->
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.min.js"></script>
+
+<script>
+// ── FIREBASE INIT ──
+const firebaseConfig = {
+  apiKey: "AIzaSyByZK5xvX7CzWxvu1FSWVc_HAac9ZkbcT0",
+  authDomain: "ssd1-aaea6.firebaseapp.com",
+  projectId: "ssd1-aaea6",
+  storageBucket: "ssd1-aaea6.firebasestorage.app",
+  messagingSenderId: "729339762528",
+  appId: "1:729339762528:web:eb765a86682ad0c4e5f005"
+};
+firebase.initializeApp(firebaseConfig);
+const fsdb = firebase.firestore();
+
+// ── STATE (in-memory mirrors of Firestore) ──
+let DB   = [];
+let ATT  = [];
+let PEND = [];
+let attType = 'Check In';
+let curEmp  = null;
+let selReasonTxt = '';
+let admPhotoData = null, sregPhotoData = null;
+let admStream = null, sregStream = null;
+let admCamOn = false, sregCamOn = false;
+let fbReady  = false;
+
+// ── FIREBASE SYNC: listen to all 3 collections in real-time ──
+function startFirebaseListeners(){
+  // Show loading indicator
+  showToast('🔄','Connecting to database…','ok');
+
+  fsdb.collection('employees').orderBy('createdAt','desc').onSnapshot(snap=>{
+    DB = snap.docs.map(d=>({...d.data(), _fid:d.id}));
+    renderEmpTable(); updateStats();
+  }, err=>{ console.error('Employees listener:', err); showToast('⚠️','DB connection issue','warn'); });
+
+  fsdb.collection('attendance').orderBy('ts','desc').onSnapshot(snap=>{
+    ATT = snap.docs.map(d=>({...d.data(), _fid:d.id}));
+    renderLog(); updateStats();
+    if(!fbReady){ fbReady=true; showToast('✅','Connected to Firebase!','ok'); }
+  }, err=>{ console.error('Attendance listener:', err); });
+
+  fsdb.collection('pending').orderBy('submittedAt','desc').onSnapshot(snap=>{
+    PEND = snap.docs.map(d=>({...d.data(), _fid:d.id}));
+    renderPending();
+  }, err=>{ console.error('Pending listener:', err); });
+}
+
+// ── FIREBASE SAVE HELPERS ──
+async function fbSaveEmployee(emp){
+  try{
+    await fsdb.collection('employees').doc(emp.id).set(emp);
+  }catch(e){ showToast('❌','Failed to save employee','fail'); throw e; }
+}
+
+async function fbDeleteEmployee(empId){
+  try{
+    await fsdb.collection('employees').doc(empId).delete();
+  }catch(e){ showToast('❌','Failed to delete employee','fail'); throw e; }
+}
+
+async function fbSaveAttendance(entry){
+  try{
+    await fsdb.collection('attendance').add(entry);
+  }catch(e){ showToast('❌','Failed to save attendance','fail'); throw e; }
+}
+
+async function fbSavePending(pend){
+  try{
+    await fsdb.collection('pending').add(pend);
+  }catch(e){ showToast('❌','Failed to submit registration','fail'); throw e; }
+}
+
+async function fbDeletePending(fid){
+  try{
+    await fsdb.collection('pending').doc(fid).delete();
+  }catch(e){ showToast('❌','Failed to remove pending','fail'); throw e; }
+}
+
+async function fbClearCollection(name){
+  try{
+    const snap = await fsdb.collection(name).get();
+    const batch = fsdb.batch();
+    snap.docs.forEach(d=>batch.delete(d.ref));
+    await batch.commit();
+  }catch(e){ showToast('❌',`Failed to clear ${name}`,'fail'); throw e; }
+}
+
+// ── CLOCK ──
+(function(){
+  const D=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const p=n=>String(n).padStart(2,'0');
+  function tick(){
+    const n=new Date();
+    document.getElementById('hclock').textContent=`${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`;
+    document.getElementById('hdate').textContent=`${D[n.getDay()]} ${p(n.getDate())} ${M[n.getMonth()]} ${n.getFullYear()}`;
+  }
+  tick();setInterval(tick,1000);
+})();
+
+// ── ADMIN AUTH ──
+const ADMIN_ID   = 'silver123';
+const ADMIN_PASS = 'star123';
+let adminLoggedIn = false;
+
+function requestAdmin(btn){
+  if(adminLoggedIn){
+    // Already authenticated — go straight in
+    goPage('admin', btn);
+    return;
+  }
+  // Show login screen
+  document.getElementById('login-id').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('login-err').classList.remove('show');
+  document.getElementById('admin-login-screen').classList.add('show');
+  setTimeout(()=>document.getElementById('login-id').focus(), 80);
+}
+
+function doLogin(){
+  const id   = document.getElementById('login-id').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const err  = document.getElementById('login-err');
+
+  if(id === ADMIN_ID && pass === ADMIN_PASS){
+    adminLoggedIn = true;
+    document.getElementById('admin-login-screen').classList.remove('show');
+    document.getElementById('logout-btn').classList.add('show');
+    // Navigate to admin page
+    const adminBtn = document.getElementById('pill-admin');
+    goPage('admin', adminBtn);
+    showToast('✅','Welcome, Admin!','ok');
+  } else {
+    err.querySelector('#login-err-msg').textContent =
+      !id ? 'Please enter your Admin ID' :
+      !pass ? 'Please enter your Password' :
+      'Incorrect ID or Password — please try again';
+    err.classList.add('show');
+    document.getElementById('login-pass').value='';
+    // Shake animation
+    const card = document.querySelector('.login-card');
+    card.style.animation='none';
+    card.offsetHeight; // reflow
+    card.style.animation='shake .4s ease';
+  }
+}
+
+function logoutAdmin(){
+  if(!confirm('Log out of Admin Panel?'))return;
+  adminLoggedIn = false;
+  document.getElementById('logout-btn').classList.remove('show');
+  // Go back to attendance tab
+  const attBtn = document.getElementById('pill-attendance');
+  goPage('attendance', attBtn);
+  showToast('🔒','Logged out of Admin','ok');
+}
+
+function togglePwdVisibility(){
+  const inp = document.getElementById('login-pass');
+  const btn = document.getElementById('eye-btn');
+  if(inp.type === 'password'){
+    inp.type = 'text'; btn.textContent = '🙈';
+  } else {
+    inp.type = 'password'; btn.textContent = '👁';
+  }
+}
+
+// Shake keyframe injection
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = `@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}`;
+document.head.appendChild(shakeStyle);
+
+// Close login screen on background click (cancel)
+document.getElementById('admin-login-screen').addEventListener('click', function(e){
+  if(e.target === this) this.classList.remove('show');
+});
+
+// ── PAGE NAV ──
+function goPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.npill').forEach(b=>b.classList.remove('on'));
+  document.getElementById('page-'+id).classList.add('on');
+  btn.classList.add('on');
+  if(id==='admin'){renderEmpTable();renderPending();}
+  if(id==='attendance'){renderLog();updateStats();}
+}
+
+// ── ID INPUT ──
+function onID(val){
+  const id=val.trim().toUpperCase();
+  const emp=DB.find(e=>e.id===id&&e.status==='active');
+  if(emp){
+    curEmp=emp;
+    document.getElementById('ep-img').src=emp.photo||'';
+    document.getElementById('ep-name').textContent=emp.name;
+    document.getElementById('ep-meta').textContent=`${emp.dept} · ${emp.shift} · ${emp.desig}`;
+    document.getElementById('ep').classList.add('show');
+    document.getElementById('mark-btn').disabled=false;
+    document.getElementById('override-btn').disabled=false;
+    setAS('ready',`Employee found: ${emp.name} — choose type and mark`);
+  } else {
+    curEmp=null;
+    document.getElementById('ep').classList.remove('show');
+    document.getElementById('mark-btn').disabled=true;
+    document.getElementById('override-btn').disabled=true;
+    if(id.length>1) setAS('fail',`No active employee with ID "${id}"`);
+    else setAS('ready','Enter Employee ID above to begin');
+  }
+}
+
+function clearAtt(){
+  document.getElementById('att-id').value='';
+  curEmp=null;
+  document.getElementById('ep').classList.remove('show');
+  document.getElementById('mark-btn').disabled=true;
+  document.getElementById('override-btn').disabled=true;
+  setAS('ready','Enter Employee ID above to begin');
+}
+
+function setType(t){
+  attType=t;
+  document.getElementById('tt-in').classList.toggle('on',t==='Check In');
+  document.getElementById('tt-out').classList.toggle('on',t==='Check Out');
+}
+
+function setAS(type,msg){
+  const d=document.getElementById('att-dot');
+  d.className='sdot';
+  const map={ready:'ready',pulse:'pulse',ok:'ok',fail:'fail',warn:'warn'};
+  d.classList.add(map[type]||'ready');
+  document.getElementById('att-stxt').textContent=msg;
+}
+
+// ── MARK ATTENDANCE ──
+async function markAttendance(){
+  if(!curEmp)return;
+  const btn=document.getElementById('mark-btn');
+  btn.disabled=true; btn.textContent='Saving…';
+  const now=new Date();
+  const e={
+    empId:curEmp.id,name:curEmp.name,dept:curEmp.dept,
+    desig:curEmp.desig,shift:curEmp.shift,photo:curEmp.photo||'',
+    type:attType,mode:'Normal',reason:'',
+    time:now.toLocaleTimeString('en-IN',{hour12:true}),
+    date:now.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
+    rawDate:now.toDateString(),ts:now.toISOString()
+  };
+  try{
+    await fbSaveAttendance(e);
+    setAS('ok',`✓ ${attType} marked for ${curEmp.name} at ${e.time}`);
+    showToast('✅',`${attType} — ${curEmp.name}`,'ok');
+  }catch(err){}
+  btn.disabled=false; btn.textContent='✓ Mark Attendance';
+}
+
+// ── OVERRIDE ──
+function openOverride(){
+  if(!curEmp)return;
+  selReasonTxt='';
+  document.getElementById('modal-ep-img').src=curEmp.photo||'';
+  document.getElementById('modal-ep-name').textContent=curEmp.name;
+  document.getElementById('modal-ep-meta').textContent=`${curEmp.dept} · ${curEmp.id}`;
+  document.getElementById('override-reason').value='';
+  document.querySelectorAll('.reason-opt').forEach(r=>r.classList.remove('sel'));
+  document.getElementById('override-modal').classList.add('show');
+}
+
+function selReason(el,txt){
+  document.querySelectorAll('.reason-opt').forEach(r=>r.classList.remove('sel'));
+  el.classList.add('sel'); selReasonTxt=txt;
+  document.getElementById('override-reason').value='';
+}
+
+async function doOverride(){
+  const custom=document.getElementById('override-reason').value.trim();
+  const reason=custom||selReasonTxt;
+  if(!reason){showToast('⚠️','Select or enter a reason','warn');return;}
+  if(!curEmp)return;
+  const now=new Date();
+  const e={
+    empId:curEmp.id,name:curEmp.name,dept:curEmp.dept,
+    desig:curEmp.desig,shift:curEmp.shift,photo:curEmp.photo||'',
+    type:attType,mode:'Override',reason,
+    time:now.toLocaleTimeString('en-IN',{hour12:true}),
+    date:now.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),
+    rawDate:now.toDateString(),ts:now.toISOString()
+  };
+  try{
+    await fbSaveAttendance(e);
+    closeModal('override-modal');
+    setAS('warn',`Override: ${attType} marked — ${reason}`);
+    showToast('⚡',`Override: ${reason}`,'warn');
+  }catch(err){}
+}
+
+// ── LOG ──
+let logFilter='';
+function filterLog(q){logFilter=q;renderLog();}
+function renderLog(){
+  const list=document.getElementById('log-list');
+  const data=logFilter ? ATT.filter(e=>e.name.toLowerCase().includes(logFilter.toLowerCase())||e.empId.toLowerCase().includes(logFilter.toLowerCase())) : ATT;
+  if(!data.length){list.innerHTML='<div class="log-empty">No records yet</div>';return;}
+  list.innerHTML=data.map(e=>{
+    const bc=e.mode==='Override'?'b-warn':(e.type==='Check In'?'b-ok':'b-blue');
+    const bt=e.mode==='Override'?`⚡ ${e.type}`:e.type;
+    const init=e.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const av=e.photo?`<img class="le-av" src="${e.photo}" alt="" onerror="this.style.display='none'">`:`<div class="le-av-ph">${init}</div>`;
+    return `<div class="le">${av}
+      <div class="le-info">
+        <div class="le-name">${e.name}</div>
+        <div class="le-meta">${e.empId} · ${e.dept}${e.reason?` · ${e.reason}`:''}</div>
+        <span class="badge ${bc}" style="margin-top:3px;">${bt}</span>
+      </div>
+      <div class="le-r"><div class="le-time">${e.time}</div><div class="le-date">${e.date}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function updateStats(){
+  const today=new Date().toDateString();
+  const t=ATT.filter(e=>e.rawDate===today);
+  document.getElementById('s-total').textContent=t.length;
+  document.getElementById('s-ok').textContent=t.filter(e=>e.mode==='Normal').length;
+  document.getElementById('s-ov').textContent=t.filter(e=>e.mode==='Override').length;
+  document.getElementById('s-emp').textContent=DB.filter(e=>e.status==='active').length;
+}
+async function clearLog(){
+  if(!confirm('Clear ALL attendance records from database? This cannot be undone.'))return;
+  try{
+    await fbClearCollection('attendance');
+    showToast('🗑','Attendance log cleared','ok');
+  }catch(err){}
+}
+
+// ── EXCEL EXPORT ──
+function exportExcel(){
+  if(!ATT.length){showToast('⚠️','No records to export','warn');return;}
+  const today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}).replace(/ /g,'_');
+  const wb=XLSX.utils.book_new();
+  const rows=[['Silver Star — Attendance Report'],[`Generated: ${new Date().toLocaleString('en-IN')}`],[],
+    ['#','Employee ID','Name','Department','Designation','Shift','Type','Mode','Reason','Date','Time']];
+  ATT.forEach((e,i)=>rows.push([i+1,e.empId,e.name,e.dept,e.desig||'',e.shift,e.type,e.mode,e.reason||'',e.date,e.time]));
+  const td=ATT.filter(e=>e.rawDate===new Date().toDateString());
+  rows.push([],[],['Today Summary'],['Total',td.length],['Normal',td.filter(e=>e.mode==='Normal').length],['Override',td.filter(e=>e.mode==='Override').length]);
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:4},{wch:12},{wch:20},{wch:14},{wch:14},{wch:10},{wch:12},{wch:10},{wch:28},{wch:14},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws,'All Records');
+  const byD={};ATT.forEach(e=>{if(!byD[e.rawDate])byD[e.rawDate]=[];byD[e.rawDate].push(e);});
+  Object.entries(byD).forEach(([d,es])=>{
+    const lbl=new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}).replace(/ /g,'_');
+    const dr=[['ID','Name','Dept','Shift','Type','Mode','Reason','Time']];
+    es.forEach(e=>dr.push([e.empId,e.name,e.dept,e.shift,e.type,e.mode,e.reason||'',e.time]));
+    const dws=XLSX.utils.aoa_to_sheet(dr);
+    dws['!cols']=[{wch:12},{wch:20},{wch:14},{wch:10},{wch:12},{wch:10},{wch:28},{wch:12}];
+    try{XLSX.utils.book_append_sheet(wb,dws,lbl.slice(0,31));}catch(err){}
+  });
+  XLSX.writeFile(wb,`SilverStar_Attendance_${today}.xlsx`);
+  showToast('📥','Excel downloaded!','ok');
+}
+
+// ── ADMIN CAMERA ──
+async function toggleAdmCam(){
+  if(admCamOn){stopAdmCam();return;}
+  try{
+    admStream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'}});
+    const v=document.getElementById('adm-vid');v.srcObject=admStream;v.style.display='block';
+    document.getElementById('adm-cam-ph').style.display='none';
+    document.getElementById('adm-captured').style.display='none';
+    admCamOn=true;admPhotoData=null;
+    document.getElementById('adm-cam-btn').textContent='■ Stop';
+    document.getElementById('adm-cap-btn').disabled=false;
+    document.getElementById('adm-ret-btn').style.display='none';
+    setCS('adm-cs','📷','Camera active');
+  }catch(e){setCS('adm-cs','❌','Camera access denied');}
+}
+function stopAdmCam(){
+  if(admStream)admStream.getTracks().forEach(t=>t.stop());
+  document.getElementById('adm-vid').style.display='none';
+  document.getElementById('adm-cam-ph').style.display='flex';
+  admCamOn=false;
+  document.getElementById('adm-cam-btn').textContent='▶ Camera';
+  document.getElementById('adm-cap-btn').disabled=true;
+  setCS('adm-cs','⚪','Camera stopped');
+}
+function admCapture(){
+  const v=document.getElementById('adm-vid');
+  const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;
+  c.getContext('2d').drawImage(v,0,0);
+  admPhotoData=c.toDataURL('image/jpeg',.82);
+  const img=document.getElementById('adm-captured');img.src=admPhotoData;img.style.display='block';
+  stopAdmCam();
+  document.getElementById('adm-ret-btn').style.display='inline-flex';
+  document.getElementById('adm-cap-btn').disabled=true;
+  setCS('adm-cs','✅','Photo captured — fill details and save');
+}
+function admRetake(){admPhotoData=null;document.getElementById('adm-captured').style.display='none';document.getElementById('adm-ret-btn').style.display='none';toggleAdmCam();}
+
+// ── SELF-REG CAMERA ──
+async function toggleSregCam(){
+  if(sregCamOn){stopSregCam();return;}
+  try{
+    sregStream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'}});
+    const v=document.getElementById('sreg-vid');v.srcObject=sregStream;v.style.display='block';
+    document.getElementById('sreg-cam-ph').style.display='none';
+    document.getElementById('sreg-captured').style.display='none';
+    sregCamOn=true;sregPhotoData=null;
+    document.getElementById('sreg-cam-btn').textContent='■ Stop';
+    document.getElementById('sreg-cap-btn').disabled=false;
+    document.getElementById('sreg-ret-btn').style.display='none';
+    setCS('sreg-cs','📷','Camera active');
+  }catch(e){setCS('sreg-cs','❌','Denied');}
+}
+function stopSregCam(){
+  if(sregStream)sregStream.getTracks().forEach(t=>t.stop());
+  document.getElementById('sreg-vid').style.display='none';
+  document.getElementById('sreg-cam-ph').style.display='flex';
+  sregCamOn=false;
+  document.getElementById('sreg-cam-btn').textContent='▶ Camera';
+  document.getElementById('sreg-cap-btn').disabled=true;
+  setCS('sreg-cs','⚪','Stopped');
+}
+function sregCapture(){
+  const v=document.getElementById('sreg-vid');
+  const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;
+  c.getContext('2d').drawImage(v,0,0);
+  sregPhotoData=c.toDataURL('image/jpeg',.82);
+  const img=document.getElementById('sreg-captured');img.src=sregPhotoData;img.style.display='block';
+  stopSregCam();
+  document.getElementById('sreg-ret-btn').style.display='inline-flex';
+  document.getElementById('sreg-cap-btn').disabled=true;
+  setCS('sreg-cs','✅','Photo captured!');
+}
+function sregRetake(){sregPhotoData=null;document.getElementById('sreg-captured').style.display='none';document.getElementById('sreg-ret-btn').style.display='none';toggleSregCam();}
+function setCS(id,ic,msg){document.getElementById(id).innerHTML=`<span>${ic}</span><span style="margin-left:6px">${msg}</span>`;}
+
+// ── SAVE EMPLOYEE ──
+async function saveEmployee(fromPending,pendData){
+  let id,name,dept,desig,shift,phone,photo;
+  if(fromPending){({id,name,dept,desig,shift,phone,photo}=pendData);}
+  else{
+    id=document.getElementById('f-id').value.trim().toUpperCase();
+    name=document.getElementById('f-name').value.trim();
+    dept=document.getElementById('f-dept').value.trim();
+    desig=document.getElementById('f-desig').value.trim();
+    shift=document.getElementById('f-shift').value;
+    phone=document.getElementById('f-phone').value.trim();
+    photo=admPhotoData;
+  }
+  if(!id||!name){showToast('⚠️','ID and Name required','warn');return;}
+  if(DB.find(e=>e.id===id)){showToast('⚠️',`ID ${id} already exists`,'warn');return;}
+  const emp={id,name,dept:dept||'N/A',desig:desig||'N/A',shift:shift||'Morning',phone:phone||'N/A',photo:photo||'',status:'active',createdAt:new Date().toISOString()};
+  const btn=document.getElementById('adm-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{
+    await fbSaveEmployee(emp);
+    if(!fromPending){
+      ['f-id','f-name','f-dept','f-desig','f-phone'].forEach(fid=>document.getElementById(fid).value='');
+      admPhotoData=null;document.getElementById('adm-captured').style.display='none';document.getElementById('adm-ret-btn').style.display='none';
+      setCS('adm-cs','⚪','Employee saved. Register another.');
+    }
+    showToast('✅',`${name} saved to Firebase!`,'ok');
+  }catch(err){}
+  if(btn){btn.disabled=false;btn.textContent='✓ Save to Database';}
+}
+
+// ── EMPLOYEE TABLE ──
+function renderEmpTable(filter=''){
+  const tbody=document.getElementById('emp-tbody');
+  const data=filter?DB.filter(e=>e.name.toLowerCase().includes(filter.toLowerCase())||e.id.toLowerCase().includes(filter.toLowerCase())):DB;
+  document.getElementById('emp-count').textContent=`${DB.length} employee${DB.length!==1?'s':''}`;
+  if(!data.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty-t"><div class="ei">👥</div><p>No employees yet</p></div></td></tr>`;return;}
+  tbody.innerHTML=data.map(e=>{
+    const av=e.photo?`<img class="t-av" src="${e.photo}" alt="">`:`<div class="t-av-ph">${e.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>`;
+    return `<tr>
+      <td>${av}</td>
+      <td style="font-weight:700;color:var(--accent)">${e.id}</td>
+      <td><div style="font-weight:600">${e.name}</div><div style="font-size:10px;color:var(--muted)">${e.desig}</div></td>
+      <td><span class="badge b-blue">${e.dept}</span></td>
+      <td><span class="badge b-green">${e.shift}</span></td>
+      <td><span class="badge ${e.status==='active'?'b-ok':'b-fail'}">${e.status}</span></td>
+      <td><button class="btn-danger" onclick="deleteEmp('${e.id}')">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+function searchEmp(q){renderEmpTable(q);}
+async function deleteEmp(id){
+  if(!confirm('Remove this employee from database?'))return;
+  try{ await fbDeleteEmployee(id); showToast('🗑','Employee removed','ok'); }catch(err){}
+}
+async function clearAllEmp(){
+  if(!confirm('Delete ALL employees from database? This cannot be undone.'))return;
+  try{ await fbClearCollection('employees'); showToast('🗑','All employees cleared','ok'); }catch(err){}
+}
+
+// ── SELF REGISTER ──
+function openSelfReg(){document.getElementById('sreg-modal').classList.add('show');}
+async function submitSelfReg(){
+  const id=document.getElementById('sr-id').value.trim().toUpperCase();
+  const name=document.getElementById('sr-name').value.trim();
+  const dept=document.getElementById('sr-dept').value.trim();
+  const desig=document.getElementById('sr-desig').value.trim();
+  const shift=document.getElementById('sr-shift').value;
+  const phone=document.getElementById('sr-phone').value.trim();
+  if(!id||!name||!phone){showToast('⚠️','ID, Name and Phone required','warn');return;}
+  if(DB.find(e=>e.id===id)){showToast('⚠️',`ID ${id} already exists`,'warn');return;}
+  if(PEND.find(e=>e.id===id)){showToast('⚠️','Already pending','warn');return;}
+  const pend={id,name,dept:dept||'N/A',desig:desig||'N/A',shift,phone,photo:sregPhotoData||'',submittedAt:new Date().toISOString()};
+  try{
+    await fbSavePending(pend);
+    closeModal('sreg-modal');stopSregCam();
+    showToast('📨',`${name} submitted for approval`,'ok');
+  }catch(err){}
+}
+
+// ── PENDING ──
+function renderPending(){
+  const sec=document.getElementById('pend-section');
+  const list=document.getElementById('pend-list');
+  if(!PEND.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  list.innerHTML=PEND.map((e,i)=>`
+    <div class="pend-item">
+      ${e.photo?`<img style="width:34px;height:34px;border-radius:8px;object-fit:cover;" src="${e.photo}" alt="">`:`<div class="t-av-ph">${e.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>`}
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:13px;">${e.name}</div>
+        <div style="font-size:10px;color:var(--muted)">${e.id} · ${e.dept} · ${e.phone}</div>
+      </div>
+      <button class="btn btn-success btn-sm" onclick="approvePending(${i})">✓ Approve</button>
+      <button class="btn-danger" onclick="rejectPending(${i})">✕</button>
+    </div>`).join('');
+}
+async function approvePending(i){
+  const p=PEND[i];
+  await saveEmployee(true,p);
+  try{ await fbDeletePending(p._fid); showToast('✅',`${p.name} approved`,'ok'); }catch(err){}
+}
+async function rejectPending(i){
+  if(!confirm(`Reject ${PEND[i].name}'s registration?`))return;
+  const p=PEND[i];
+  try{ await fbDeletePending(p._fid); showToast('🗑',`${p.name} rejected`,'warn'); }catch(err){}
+}
+
+// ── DB GUIDE ──
+function downloadEmpTemplate(){
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet([
+    ['Employee ID','Full Name','Department','Designation','Shift','Phone'],
+    ['SS-001','John Smith','Operations','Manager','Morning','9876543210'],
+    ['SS-002','Priya Patel','HR','Executive','Afternoon','9876543211'],
+  ]);
+  ws['!cols']=[{wch:14},{wch:22},{wch:16},{wch:16},{wch:12},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws,'Employees');
+  XLSX.writeFile(wb,'SilverStar_Employee_Template.xlsx');
+  showToast('📥','Template downloaded!','ok');
+}
+
+async function importEmployeesFromExcel(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      let added=0;
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i];
+        if(!r[0]||!r[1])continue;
+        const id=String(r[0]).trim().toUpperCase();
+        if(DB.find(e=>e.id===id))continue;
+        const emp={id,name:String(r[1]).trim(),dept:String(r[2]||'N/A').trim(),
+          desig:String(r[3]||'N/A').trim(),shift:String(r[4]||'Morning').trim(),
+          phone:String(r[5]||'N/A').trim(),photo:'',status:'active',createdAt:new Date().toISOString()};
+        await fbSaveEmployee(emp);
+        added++;
+      }
+      showToast('✅',`${added} employee${added!==1?'s':''} imported to Firebase`,'ok');
+    }catch(err){showToast('❌','Error importing file','fail');}
+    input.value='';
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ── MODAL HELPERS ──
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+
+// Close modal on bg click
+document.querySelectorAll('.modal-bg').forEach(bg=>{
+  bg.addEventListener('click',function(e){if(e.target===bg){bg.classList.remove('show');stopSregCam();}});
+});
+
+// ── TOAST ──
+let tt;
+function showToast(ic,msg,type='ok'){
+  document.getElementById('t-ic').textContent=ic;
+  document.getElementById('t-msg').textContent=msg;
+  const t=document.getElementById('toast');
+  t.className=`toast show t${type}`;
+  clearTimeout(tt);tt=setTimeout(()=>t.className='toast',3400);
+}
+
+// ── INIT — start Firebase listeners ──
+startFirebaseListeners();
+updateStats();
+</script>
+</body>
+</html>
